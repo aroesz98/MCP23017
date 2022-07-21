@@ -1,4 +1,4 @@
-# MCP23017
+# MCP23017 Library for STM32 MCU's
 This is a library for the MCP23017 I2C Port Expanders.
 To use this library simply create MCP23017 object by calling:
     MCP23017 object_name(address, Bus)
