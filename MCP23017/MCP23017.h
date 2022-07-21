@@ -2,53 +2,53 @@
 
 #include <i2c.h>
 
-#define MCP23017_I2C_ADDRESS 0x20    //The default I2C address of MCP23017.
-#define _MCP23017_INTERRUPT_SUPPORT_ //Enables support for MCP23017 interrupts.
+#define INT_RISING_EDGE		2
+#define INT_FALLING_EDGE	1
+#define INT_ON_CHANGE		0
 
-#define RISING	2
-#define FALLING	1
-#define CHANGE	0
-
-#define LOW		0
-#define HIGH	1
+#define STATE_LOW		0
+#define STATE_HIGH		1
 
 #define INPUT			0x0
 #define OUTPUT			0x1
 #define INPUT_PULLUP	0x2
 
-#define lowByte(w) ((uint8_t) ((w) & 0xff))
-#define highByte(w) ((uint8_t) ((w) >> 8))
-#define bitRead(value, bit) (((value) >> (bit)) & 0x01)
-#define bitSet(value, bit) ((value) |= (1UL << (bit)))
-#define bitClear(value, bit) ((value) &= ~(1UL << (bit)))
-#define bitWrite(value, bit, bitvalue) ((bitvalue) ? bitSet((value), (bit)) : bitClear((value), (bit) ))
+#define readBit(value, bit) (((value) >> (bit)) & 0x01)
+#define setBit(value, bit) ((value) |= (1UL << (bit)))
+#define clearBit(value, bit) ((value) &= ~(1UL << (bit)))
+#define writeBit(value, bit, bitvalue) ((bitvalue) ? setBit((value), (bit)) : clearBit((value), (bit) ))
 
+/***************************************************************************************
+** Class name:           	MCP23017Port
+** Description:             GPIO Port defines
+***************************************************************************************/
 enum class MCP23017Port : uint8_t
 {
-	A = 0,
-	B = 1
+	PORT_A = 0,
+	PORT_B = 1
 };
 
-struct MCP23017Pin
-{
-	enum Names {
-		GPA0 = 0,
-		GPA1,
-		GPA2,
-		GPA3,
-		GPA4,
-		GPA5,
-		GPA6,
-		GPA7,
-		GPB0 = 8,
-		GPB1,
-		GPB2,
-		GPB3,
-		GPB4,
-		GPB5,
-		GPB6,
-		GPB7
-	};
+/***************************************************************************************
+** Structure name:			MCP23017Pin
+** Description:				GPIO Pin defines
+***************************************************************************************/
+enum MCP23017Pin {
+	PA0 = 0,
+	PA1 = 1,
+	PA2 = 2,
+	PA3 = 3,
+	PA4 = 4,
+	PA5 = 5,
+	PA6 = 6,
+	PA7 = 7,
+	PB0 = 8,
+	PB1 = 9,
+	PB2 = 10,
+	PB3 = 11,
+	PB4 = 12,
+	PB5 = 13,
+	PB6 = 14,
+	PB7 = 15
 };
 
 /***************************************************************************************
@@ -65,7 +65,7 @@ enum class MCP23017InterruptMode : uint8_t
 ** Class name:           	_MCP23017_regs
 ** Description:             List of all usable registers
 ***************************************************************************************/
-enum class _MCP23017_regs : uint8_t
+enum class MCP23017Register : uint8_t
 {
 	IODIR_A		= 0x00, 									//Controls the direction of the data for port A.
 	IODIR_B		= 0x01,										//Controls the direction of the data for port B.
@@ -90,14 +90,15 @@ enum class _MCP23017_regs : uint8_t
 	OLAT_B		= 0x15,										//Provides access to the port B output latches.
 };
 
-inline _MCP23017_regs operator+(_MCP23017_regs a, MCP23017Port b) {
-	return static_cast<_MCP23017_regs>(static_cast<uint8_t>(a) + static_cast<uint8_t>(b));
+inline MCP23017Register operator+(MCP23017Register a, MCP23017Port b) {
+	return static_cast<MCP23017Register>(static_cast<uint8_t>(a) + static_cast<uint8_t>(b));
 };
 
 class MCP23017 {
 	private:
 		I2C_HandleTypeDef *_bus;
 		uint8_t _deviceAddr;
+
 	public:
 		MCP23017(uint8_t address, I2C_HandleTypeDef &Bus);
 		MCP23017(I2C_HandleTypeDef &bus);
@@ -112,17 +113,14 @@ class MCP23017 {
 		uint8_t readPin(uint8_t pin);
 
 		void writePort(MCP23017Port port, uint8_t value);
-		void writeABPort(uint16_t value);
+		void writeWholeIO(uint16_t value);
 
-		uint8_t readWholePort(MCP23017Port port);
+		uint8_t readPort(MCP23017Port port);
 		uint16_t readWholeIO();
 
-		void writeRegister(_MCP23017_regs reg, uint8_t value);
-		void writeRegister(_MCP23017_regs reg, uint8_t portA, uint8_t portB);
-		uint8_t readRegister(_MCP23017_regs reg);
-		void readRegister(_MCP23017_regs reg, uint8_t& portA, uint8_t& portB);
-
-	#ifdef _MCP23017_INTERRUPT_SUPPORT_
+		void writeRegister(MCP23017Register reg, uint8_t value);
+		uint8_t readRegister(MCP23017Register reg);
+		void readRegister(MCP23017Register reg, uint8_t& portA, uint8_t& portB);
 
 		void interruptMode(MCP23017InterruptMode intMode);
 		void interrupt(MCP23017Port port, uint8_t mode);
@@ -130,6 +128,4 @@ class MCP23017 {
 		void interruptedBy(uint8_t& portA, uint8_t& portB);
 		void clearInterrupts();
 		void clearInterrupts(uint8_t& portA, uint8_t& portB);
-
-	#endif
 };
